@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+mypy_cache/
+.ruff_cache/
+
+# Type checking
+.dmypy.json
+dmypy.json
+
+# Vector database (generated)
+vector_db/
+*.index
+*.pickle
+
+# Memory and logs
+memory.json
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# UV (keep lock file, ignore cache)
+.uv/
+uv.lock.bak
+
+# LangGraph checkpoints
+.langgraph_api/
+.langgraph_checkpoint.*.pckl
+.langgraph_ops.pckl
+store.pckl
+store.vectors.pckl

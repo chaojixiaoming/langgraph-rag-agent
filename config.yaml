@@ -1,0 +1,45 @@
+model:
+  name: "deepseek-chat"
+  provider: "deepseek"
+  api_base: "https://api.deepseek.com/v1"
+  temperature: 0.7
+  max_tokens: 2000
+
+rag:
+  enabled: true
+  chunk_size: 500
+  chunk_overlap: 50
+  top_k: 3
+  vector_db:
+    type: "faiss"
+    persist_directory: "./vector_db"
+    embedding_model: "BAAI/bge-small-zh-v1.5"
+
+tools:
+  enabled: true
+  available_tools:
+    - search_web
+    - calculator
+    - get_weather
+
+memory:
+  enabled: true
+  storage_path: "./memory.json"
+  max_history: 10
+
+agent:
+  route_keywords_tools:
+    - "搜索"
+    - "计算"
+    - "天气"
+    - "查询"
+  route_keywords_rag:
+    - "什么是"
+    - "如何"
+    - "介绍"
+    - "文档"
+    - "说明"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

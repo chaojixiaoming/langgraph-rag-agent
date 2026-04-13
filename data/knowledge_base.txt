@@ -1,0 +1,209 @@
+# LangGraph Agent 知识库
+
+## 1. LangGraph 简介
+
+LangGraph 是 LangChain 生态系统中用于构建有状态、多步骤 AI 应用的核心框架。它基于图结构来编排复杂的工作流程，支持循环、条件分支和并行执行。
+
+### 核心特性：
+- **状态管理**：自动管理应用状态，支持状态持久化和恢复
+- **图结构**：使用节点和边定义工作流，清晰表达业务逻辑
+- **循环支持**：原生支持循环结构，适合迭代优化场景
+- **人机协作**：内置人工审核节点，支持人在回路（Human-in-the-loop）
+- **时间旅行**：支持状态版本控制和回溯调试
+
+## 2. StateGraph 工作原理
+
+StateGraph 是 LangGraph 的核心组件，用于构建状态图：
+
+```python
+from langgraph.graph import StateGraph, START, END
+
+# 定义状态
+class State(TypedDict):
+    messages: list
+    input: str
+    output: str
+
+# 创建图
+graph = StateGraph(State)
+
+# 添加节点
+graph.add_node("process", process_function)
+
+# 添加边
+graph.add_edge(START, "process")
+graph.add_edge("process, END")
+
+# 编译
+app = graph.compile()
+```
+
+### 关键概念：
+1. **State（状态）**：在节点之间传递的数据结构
+2. **Node（节点）**：执行具体业务逻辑的函数
+3. **Edge（边）**：连接节点的路径，分为普通边和条件边
+4. **Context（上下文）**：运行时配置参数，如模型、温度等
+
+## 3. 路由机制
+
+LangGraph 提供灵活的路由机制：
+
+### 条件路由：
+使用 `add_conditional_edges` 实现动态路由决策：
+
+```python
+def route_function(state):
+    if state["needs_tools"]:
+        return "tool_executor"
+    return "llm_direct"
+
+graph.add_conditional_edges(
+    "router",
+    route_function,
+    {
+        "tool_executor": "tool_node",
+        "llm_direct": "llm_node"
+    }
+)
+```
+
+### 路由应用场景：
+- **工具调用判断**：根据用户意图决定是否调用外部工具
+- **RAG 检索触发**：识别知识密集型问题并启动检索
+- **质量检查循环**：对生成结果进行评估，必要时重新生成
+- **多Agent协调**：在不同专业Agent之间分配任务
+
+## 4. 工具集成
+
+LangGraph 无缝集成 LangChain 的工具生态：
+
+### 内置工具类型：
+1. **搜索工具**：网络搜索、API查询
+2. **计算工具**：数学运算、代码执行
+3. **数据库工具**：SQL查询、向量检索
+4. **文件工具**：读写文件、解析文档
+
+### 工具绑定方式：
+```python
+from langchain_core.tools import tool
+
+@tool
+def calculator(expression: str) -> str:
+    """执行数学计算"""
+    result = eval(expression)
+    return f"计算结果: {result}"
+
+# 绑定到LLM
+llm_with_tools = llm.bind_tools([calculator])
+```
+
+## 5. RAG 集成模式
+
+RAG（Retrieval-Augmented Generation）是 LangGraph 的典型应用：
+
+### 架构组成：
+1. **文档加载器**：支持 PDF、TXT、Markdown 等格式
+2. **文本分割器**：将长文档切分成可管理的块
+3. **向量化模型**：将文本转换为向量表示
+4. **向量数据库**：存储和检索向量（FAISS、ChromaDB、Pinecone）
+5. **检索器**：执行相似度搜索
+6. **生成器**：基于检索结果生成回答
+
+### 典型工作流：
+```
+用户问题 → 查询理解 → 向量检索 → 
+结果排序 → 上下文构建 → LLM生成 → 最终回答
+```
+
+## 6. 记忆系统
+
+LangGraph 支持多种记忆机制：
+
+### 记忆类型：
+1. **短期记忆**：当前对话上下文
+2. **长期记忆**：跨会话的历史信息
+3. **语义记忆**：提取的知识实体和关系
+4. **程序记忆**：任务执行过程和结果
+
+### 实现方式：
+- 使用 Checkpointer 实现状态持久化
+- 自定义 MemorySaver 节点保存关键信息
+- 结合向量数据库实现语义检索式记忆
+
+## 7. 部署选项
+
+LangGraph 支持多种部署方式：
+
+### 本地开发：
+- 直接运行 Python 脚本
+- 使用 LangGraph Studio 可视化调试
+
+### 生产部署：
+- **LangGraph Cloud**：托管服务，开箱即用
+- **Docker容器化**：打包为标准容器
+- **Kubernetes**：大规模集群部署
+- **自托管服务器**：完全控制的基础设施
+
+### 配置文件 langgraph.json：
+```json
+{
+  "dependencies": ["."],
+  "graphs": {
+    "agent": "./src/agent/graph.py:agent"
+  },
+  "env": "./.env"
+}
+```
+
+## 8. 最佳实践
+
+### 项目结构建议：
+```
+project/
+├── src/
+│   └── agent/
+│       ├── state.py      # 状态定义
+│       ├── context.py    # 运行时配置
+│       ├── graph.py      # 图构建
+│       ├── nodes/        # 节点实现
+│       └── utils/        # 工具模块
+├── config.yaml           # 配置文件
+├── pyproject.toml        # 项目配置
+└── langgraph.json        # LangGraph配置
+```
+
+### 开发建议：
+1. **模块化设计**：每个节点独立文件，职责单一
+2. **类型标注**：使用 TypedDict 和 dataclass 保证类型安全
+3. **异步优先**：所有节点函数使用 async/await
+4. **错误处理**：每个节点添加异常捕获和日志
+5. **测试覆盖**：单元测试 + 集成测试 + E2E测试
+6. **配置外置**：敏感信息和可调参数放入配置文件
+
+## 9. 常见问题解决
+
+### Q1: 如何选择合适的模型？
+A: 根据任务复杂度和成本预算选择：
+- 简单问答：deepseek-chat、gpt-3.5-turbo
+- 复杂推理：deepseek-reasoner、gpt-4、Claude-3
+- 代码生成：Codex、StarCoder
+- 中文场景：通义千问、文心一言、DeepSeek系列
+
+### Q2: RAG 检索不准确怎么办？
+A: 优化策略：
+- 调整 chunk_size 和 chunk_overlap
+- 使用混合检索（关键词+向量）
+- 添加重排序（reranker）步骤
+- 优化 prompt 模板
+- 使用更好的 embedding 模型
+
+### Q3: 如何处理长对话？
+A: 解决方案：
+- 实现滑动窗口机制
+- 使用摘要压缩历史消息
+- 分层记忆架构（短期+长期）
+- 设置合理的 token 上限
+
+## 10. 总结
+
+LangGraph 为构建生产级 AI 应用提供了强大而灵活的框架。通过合理的状态设计、清晰的节点划分和完善的工具集成，可以快速构建出可靠、可维护的智能系统。结合 RAG 和记忆机制，Agent 能够持续学习和改进，为用户提供越来越精准的服务。
