@@ -1,12 +1,18 @@
+import sys
+import os
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from langgraph.graph import StateGraph, START, END
-from .state import State
-from .context import Context
-from .nodes.router import router_node
-from .nodes.llm_direct import llm_direct_node
-from .nodes.tool_executor import tool_executor_node
-from .nodes.result_formatter import result_formatter_node
-from .nodes.response_generator import response_generator_node
-from .nodes.memory_saver import memory_saver_node
+from src.agent.state import State
+from src.agent.context import Context
+from src.agent.nodes.router import router_node
+from src.agent.nodes.llm_direct import llm_direct_node
+from src.agent.nodes.tool_executor import tool_executor_node
+from src.agent.nodes.result_formatter import result_formatter_node
+from src.agent.nodes.response_generator import response_generator_node
+from src.agent.nodes.memory_saver import memory_saver_node
 
 
 def route_decision(state: State) -> str:

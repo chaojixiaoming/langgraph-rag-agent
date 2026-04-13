@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional
-from .vector_db import VectorDBManager, initialize_knowledge_base
+from src.agent.utils.vector_db import VectorDBManager, initialize_knowledge_base
 
 
 class RAGRetriever:
